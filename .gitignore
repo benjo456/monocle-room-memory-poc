@@ -1,0 +1,14 @@
+node_modules/
+.env
+.DS_Store
+npm-debug.log*
+data/clips/*
+data/audio/*
+data/meta/*
+data/frames/*
+data/memory.jsonl
+data/*.jsonl
+!data/clips/.gitkeep
+!data/audio/.gitkeep
+!data/meta/.gitkeep
+!data/frames/.gitkeep

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monocle POC</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="codex-app">
+      <aside class="sidebar">
+        <div class="traffic-lights" aria-hidden="true">
+          <span class="traffic red"></span>
+          <span class="traffic yellow"></span>
+          <span class="traffic green"></span>
+        </div>
+
+        <div class="brand-block">
+          <div class="brand-mark">M</div>
+          <div>
+            <h1>Monocle</h1>
+            <p id="api-status">Checking server...</p>
+          </div>
+        </div>
+
+        <nav class="side-nav" aria-label="Monocle sections">
+          <a href="#capture" class="nav-item active">Capture</a>
+          <a href="#ask" class="nav-item">Ask</a>
+          <a href="#memory" class="nav-item">Memory</a>
+          <a href="#brain" class="nav-item">Brain</a>
+        </nav>
+
+        <div class="slash-card">
+          <span class="slash-command">/monocle</span>
+          <span>Codex query bridge</span>
+        </div>
+      </aside>
+
+      <section class="main-stage">
+        <section class="topbar">
+          <div>
+            <p class="eyebrow">Live room memory</p>
+            <h2>Monocle capture</h2>
+          </div>
+          <div class="controls">
+            <label>
+              Clip seconds
+              <input id="clip-seconds" type="number" min="5" max="120" value="30" />
+            </label>
+            <button id="start" class="primary-action">Start</button>
+            <button id="toggle-preview" aria-pressed="false">Hide video</button>
+            <button id="clip-now" disabled>Clip now</button>
+            <button id="stop" disabled>Stop</button>
+          </div>
+        </section>
+
+        <section class="workspace" id="capture">
+          <div class="live-panel">
+            <video id="preview" autoplay muted playsinline></video>
+            <div class="recording-strip">
+              <span id="recording-dot"></span>
+              <strong id="recording-state">Idle</strong>
+              <span id="clip-count">0 clips</span>
+              <span id="countdown">--</span>
+            </div>
+          </div>
+
+          <div class="ask-panel" id="ask">
+            <div class="quick-actions">
+              <button data-question="What was that last presentation about?">Last presentation</button>
+              <button data-question="Summarize the last 5 minutes.">Last 5 mins</button>
+              <button data-question="What action items were mentioned?">Actions</button>
+            </div>
+            <form id="ask-form">
+              <input
+                id="question"
+                type="text"
+                placeholder="Ask Monocle about what just happened..."
+                autocomplete="off"
+              />
+              <button type="submit" class="send-action">Ask</button>
+            </form>
+            <article id="answer" class="answer empty">Answers will appear here.</article>
+          </div>
+        </section>
+
+        <section class="memory-panel" id="memory">
+          <div class="memory-header">
+            <div>
+              <p class="eyebrow">Timeline</p>
+              <h2>Monocle clip memory</h2>
+            </div>
+            <div class="memory-actions">
+              <button id="refresh">Refresh</button>
+              <button id="clear-memory">Clear</button>
+            </div>
+          </div>
+          <div id="clips" class="clips"></div>
+        </section>
+
+        <section class="brain-panel" id="brain">
+          <div class="brain-header">
+            <div>
+              <p class="eyebrow">Cognition</p>
+              <h2>Monocle brain</h2>
+            </div>
+            <div class="brain-meter" id="brain-meter">Waiting for memory</div>
+          </div>
+
+          <div class="brain-stage">
+            <div class="brain-visual" aria-hidden="true">
+              <canvas id="brain-canvas"></canvas>
+              <div class="monocle-face">
+                <div class="brain-eye left-eye"><span></span></div>
+                <div class="brain-eye right-eye"><span></span></div>
+                <div class="brain-mouth"></div>
+              </div>
+            </div>
+
+            <div class="word-cloud" id="word-cloud" aria-label="Live memory word cloud"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
