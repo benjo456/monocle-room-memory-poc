@@ -16,10 +16,18 @@ const questionInput = document.querySelector("#question");
 const answerEl = document.querySelector("#answer");
 const refreshButton = document.querySelector("#refresh");
 const clearMemoryButton = document.querySelector("#clear-memory");
+const settingsToggleButton = document.querySelector("#settings-toggle");
+const settingsDialog = document.querySelector("#settings-dialog");
+const settingsForm = document.querySelector("#settings-form");
+const settingsCloseButton = document.querySelector("#settings-close");
+const settingsClearButton = document.querySelector("#settings-clear");
+const apiKeyInput = document.querySelector("#openai-api-key");
+const settingsMessage = document.querySelector("#settings-message");
 const navItems = document.querySelectorAll(".nav-item");
 const wordCloudEl = document.querySelector("#word-cloud");
 const brainMeterEl = document.querySelector("#brain-meter");
 const brainCanvas = document.querySelector("#brain-canvas");
+const apiKeyStorageKey = "monocleOpenAIApiKey";
 
 let stream;
 let clipNumber = 0;
@@ -44,6 +52,7 @@ await refreshClips();
 startBrainLoop();
 startBrainCanvas();
 updatePreviewVisibility();
+updateApiKeyUi();
 
 startButton.addEventListener("click", startRecording);
 togglePreviewButton.addEventListener("click", togglePreview);
@@ -51,6 +60,9 @@ clipNowButton.addEventListener("click", clipNow);
 stopButton.addEventListener("click", stopRecording);
 refreshButton.addEventListener("click", refreshClips);
 clearMemoryButton.addEventListener("click", clearMemory);
+settingsToggleButton.addEventListener("click", openSettings);
+settingsCloseButton.addEventListener("click", closeSettings);
+settingsClearButton.addEventListener("click", clearStoredApiKey);
 navItems.forEach((item) => item.addEventListener("click", () => window.setTimeout(syncNavFromHash, 0)));
 window.addEventListener("hashchange", syncNavFromHash);
 syncNavFromHash();
@@ -72,7 +84,7 @@ askForm.addEventListener("submit", async (event) => {
 
   const response = await fetch("/api/ask", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: modelRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ question, windowMinutes: 10 }),
   });
 
@@ -92,13 +104,67 @@ askForm.addEventListener("submit", async (event) => {
   renderBrain(latestClips);
 });
 
+settingsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const key = apiKeyInput.value.trim();
+
+  if (key) {
+    localStorage.setItem(apiKeyStorageKey, key);
+    settingsMessage.textContent = "Saved in this browser.";
+  } else {
+    localStorage.removeItem(apiKeyStorageKey);
+    settingsMessage.textContent = "Key cleared.";
+  }
+
+  updateApiKeyUi();
+  await loadStatus();
+  window.setTimeout(closeSettings, 280);
+});
+
 async function loadStatus() {
-  const response = await fetch("/api/status");
+  const response = await fetch("/api/status", {
+    headers: modelRequestHeaders(),
+  });
   const status = await response.json();
-  const keyStatus = status.hasOpenAIKey
-    ? "Connected - audio + vision"
-    : "Local capture - no model key";
+  const keyStatus =
+    status.keySource === "browser"
+      ? "Connected - browser key"
+      : status.keySource === "server"
+        ? "Connected - server key"
+        : "Local capture - no model key";
   apiStatus.textContent = keyStatus;
+}
+
+function openSettings() {
+  apiKeyInput.value = storedApiKey();
+  settingsMessage.textContent = storedApiKey() ? "Saved in this browser." : "";
+  settingsDialog.showModal();
+  apiKeyInput.focus();
+}
+
+function closeSettings() {
+  settingsDialog.close();
+}
+
+async function clearStoredApiKey() {
+  apiKeyInput.value = "";
+  localStorage.removeItem(apiKeyStorageKey);
+  settingsMessage.textContent = "Key cleared.";
+  updateApiKeyUi();
+  await loadStatus();
+}
+
+function storedApiKey() {
+  return localStorage.getItem(apiKeyStorageKey)?.trim() || "";
+}
+
+function modelRequestHeaders(headers = {}) {
+  const key = storedApiKey();
+  return key ? { ...headers, "X-OpenAI-API-Key": key } : headers;
+}
+
+function updateApiKeyUi() {
+  settingsToggleButton.classList.toggle("has-key", Boolean(storedApiKey()));
 }
 
 function syncNavFromHash() {
@@ -296,6 +362,7 @@ async function handleSegmentStop(segment) {
   try {
     const response = await fetch("/api/upload-clip", {
       method: "POST",
+      headers: modelRequestHeaders(),
       body: form,
     });
     if (!response.ok) {

@@ -47,6 +47,9 @@
               Clip seconds
               <input id="clip-seconds" type="number" min="5" max="120" value="30" />
             </label>
+            <button id="settings-toggle" class="icon-button" type="button" aria-label="Settings" title="Settings">
+              <span aria-hidden="true">&#9881;</span>
+            </button>
             <button id="start" class="primary-action">Start</button>
             <button id="toggle-preview" aria-pressed="false">Hide video</button>
             <button id="clip-now" disabled>Clip now</button>
@@ -122,6 +125,38 @@
         </section>
       </section>
     </main>
+
+    <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+      <form id="settings-form" class="settings-card">
+        <header>
+          <div>
+            <p class="eyebrow">Settings</p>
+            <h2 id="settings-title">Model key</h2>
+          </div>
+          <button id="settings-close" class="icon-button" type="button" aria-label="Close settings" title="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+
+        <label class="settings-field">
+          OpenAI API key
+          <input
+            id="openai-api-key"
+            type="password"
+            placeholder="sk-..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </label>
+
+        <p id="settings-message" class="settings-message" role="status"></p>
+
+        <div class="settings-actions">
+          <button id="settings-clear" type="button">Clear</button>
+          <button type="submit" class="primary-action">Save</button>
+        </div>
+      </form>
+    </dialog>
 
     <script src="/app.js" type="module"></script>
   </body>

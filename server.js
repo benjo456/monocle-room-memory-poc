@@ -16,8 +16,8 @@ const execFileAsync = promisify(execFile);
 
 const app = express();
 const port = Number(process.env.PORT || 5177);
-const hasOpenAIKey = Boolean(process.env.OPENAI_API_KEY);
-const openai = hasOpenAIKey ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const envOpenAIKey = process.env.OPENAI_API_KEY?.trim() || "";
+const envOpenAI = envOpenAIKey ? new OpenAI({ apiKey: envOpenAIKey }) : null;
 
 const dataDir = path.join(__dirname, "data");
 const clipsDir = path.join(dataDir, "clips");
@@ -53,10 +53,13 @@ const upload = multer({
   },
 });
 
-app.get("/api/status", (_req, res) => {
+app.get("/api/status", (req, res) => {
+  const keySource = openAIKeySource(req);
+
   res.json({
     ok: true,
-    hasOpenAIKey,
+    hasOpenAIKey: keySource !== "none",
+    keySource,
     transcribeModel: process.env.TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe",
     chatModel: process.env.CHAT_MODEL || "gpt-4.1-mini",
     memoryPath,
@@ -75,6 +78,7 @@ app.post("/api/upload-clip", upload.single("clip"), async (req, res) => {
     return res.status(400).json({ error: "Missing clip file" });
   }
 
+  const openai = openAIForRequest(req);
   const clip = {
     id: randomUUID(),
     clipNumber: Number(req.body.clipNumber || 0),
@@ -106,7 +110,7 @@ app.post("/api/upload-clip", upload.single("clip"), async (req, res) => {
   const browserTranscript = String(req.body.browserTranscript || "").trim();
 
   try {
-    const transcript = await transcribeClip(req.file.path);
+    const transcript = await transcribeClip(req.file.path, openai);
     record.transcript = transcript.text || browserTranscript;
     if (transcript.error) record.errors.push(transcript.error);
     if (!transcript.text && browserTranscript) {
@@ -121,7 +125,7 @@ app.post("/api/upload-clip", upload.single("clip"), async (req, res) => {
   }
 
   try {
-    const visual = await analyzeClipVisuals(req.file.path, record);
+    const visual = await analyzeClipVisuals(req.file.path, record, openai);
     record.visualSummary = visual.visualSummary;
     record.frameUrl = visual.frameUrl;
     record.visibleText = visual.visibleText;
@@ -134,7 +138,7 @@ app.post("/api/upload-clip", upload.single("clip"), async (req, res) => {
   }
 
   try {
-    const analysis = await summarizeClip(record);
+    const analysis = await summarizeClip(record, openai);
     record.summary = analysis.summary;
     record.topics = analysis.topics;
     record.actionItems = analysis.actionItems;
@@ -158,12 +162,13 @@ app.post("/api/ask", async (req, res) => {
   }
 
   const records = await recentRecords(windowMinutes);
-  const answer = await answerQuestion(question, records, windowMinutes);
+  const answer = await answerQuestion(question, records, windowMinutes, openAIForRequest(req));
   res.json(answer);
 });
 
 app.post("/api/backfill-visuals", async (req, res) => {
   const limit = Number(req.body?.limit || 20);
+  const openai = openAIForRequest(req);
   const records = await readMemory();
   const candidates = records
     .filter((record) => !record.frameUrl && record.path)
@@ -173,7 +178,7 @@ app.post("/api/backfill-visuals", async (req, res) => {
   for (const record of candidates) {
     try {
       await fsp.access(record.path);
-      const visual = await analyzeClipVisuals(record.path, record);
+      const visual = await analyzeClipVisuals(record.path, record, openai);
       record.visualSummary = visual.visualSummary;
       record.frameUrl = visual.frameUrl;
       record.visibleText = visual.visibleText;
@@ -214,10 +219,25 @@ app.post("/api/reset", async (_req, res) => {
 
 app.listen(port, () => {
   console.log(`Monocle POC running at http://localhost:${port}`);
-  console.log(hasOpenAIKey ? "OpenAI API key detected." : "OPENAI_API_KEY not set; clips will record but not transcribe.");
+  console.log(envOpenAI ? "OpenAI API key detected." : "OPENAI_API_KEY not set; clips will record but not transcribe unless a browser key is provided.");
 });
 
-async function transcribeClip(filePath) {
+function openAIForRequest(req) {
+  const requestKey = requestOpenAIKey(req);
+  return requestKey ? new OpenAI({ apiKey: requestKey }) : envOpenAI;
+}
+
+function requestOpenAIKey(req) {
+  return String(req.get("x-openai-api-key") || "").trim();
+}
+
+function openAIKeySource(req) {
+  if (requestOpenAIKey(req)) return "browser";
+  if (envOpenAI) return "server";
+  return "none";
+}
+
+async function transcribeClip(filePath, openai) {
   if (!openai) {
     return { text: "", error: "OPENAI_API_KEY is not set, so this clip was saved without transcription." };
   }
@@ -262,7 +282,7 @@ async function normalizeAudioForTranscription(filePath) {
   }
 }
 
-async function analyzeClipVisuals(filePath, record) {
+async function analyzeClipVisuals(filePath, record, openai) {
   const frame = await extractRepresentativeFrame(filePath, record.id);
 
   if (!openai) {
@@ -352,7 +372,7 @@ async function extractRepresentativeFrame(filePath, clipId) {
   }
 }
 
-async function summarizeClip(record) {
+async function summarizeClip(record, openai) {
   if (!openai) {
     if (record.transcript) {
       return localTranscriptAnalysis(record.transcript);
@@ -435,7 +455,7 @@ async function summarizeClip(record) {
   return JSON.parse(response.output_text);
 }
 
-async function answerQuestion(question, records, windowMinutes) {
+async function answerQuestion(question, records, windowMinutes, openai) {
   if (!records.length) {
     return {
       answer: `I do not have any recorded clips in the last ${windowMinutes} minutes yet.`,

@@ -12,6 +12,8 @@ npm start
 
 Then open `http://localhost:5177`.
 
+You can set `OPENAI_API_KEY` in `.env`, or use the settings cog in the app to save a browser-local key.
+
 ## Codex skill setup
 
 This repo includes a Codex skill template at `codex/skills/monocle` so Codex can answer `/monocle` questions from the local recorder.

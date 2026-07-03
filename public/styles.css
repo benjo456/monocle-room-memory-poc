@@ -69,6 +69,7 @@ button:active:not(:disabled) {
 
 button:focus-visible,
 input:focus-visible,
+dialog:focus-visible,
 a:focus-visible {
   outline: 2px solid rgba(16, 185, 129, 0.62);
   outline-offset: 2px;
@@ -274,6 +275,21 @@ h2 {
   text-align: center;
 }
 
+.icon-button {
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.icon-button.has-key {
+  border-color: rgba(16, 185, 129, 0.72);
+  color: #d7fff0;
+}
+
 .primary-action {
   background: #f4f4f4;
   color: #121314;
@@ -452,6 +468,62 @@ video {
 
 .answer.empty {
   color: #7f8084;
+}
+
+.settings-dialog {
+  width: min(460px, calc(100vw - 32px));
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.settings-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.settings-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #18191a;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 16px;
+}
+
+.settings-card header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.settings-field {
+  color: var(--muted);
+  display: grid;
+  font-size: 13px;
+  gap: 7px;
+}
+
+.settings-field input {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-align: left;
+}
+
+.settings-message {
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .memory-panel {
