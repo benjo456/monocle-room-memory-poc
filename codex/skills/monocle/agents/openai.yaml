@@ -1,0 +1,4 @@
+interface:
+  display_name: "Monocle"
+  short_description: "Query live room recording memory"
+  default_prompt: "Use Monocle to answer what was just said or presented in the room."

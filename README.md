@@ -12,6 +12,27 @@ npm start
 
 Then open `http://localhost:5177`.
 
+## Codex skill setup
+
+This repo includes a Codex skill template at `codex/skills/monocle` so Codex can answer `/monocle` questions from the local recorder.
+
+From this repository root, install or refresh the skill:
+
+```bash
+mkdir -p ~/.codex/skills/monocle
+REPO_PATH="$(pwd)"
+sed "s|__MONOCLE_REPO__|$REPO_PATH|g" codex/skills/monocle/SKILL.md > ~/.codex/skills/monocle/SKILL.md
+cp -R codex/skills/monocle/agents ~/.codex/skills/monocle/
+```
+
+Restart Codex so it reloads local skills. Then ask Codex with:
+
+```text
+/monocle what was the latest presentation about?
+```
+
+The skill runs `npm run ask:monocle` against this checkout and uses the recorder at `http://localhost:5177`. Keep the Monocle server running and the browser recorder active when you want fresh room memory.
+
 ## Notes
 
 - Requires `ffmpeg` on the local machine for audio and frame extraction.
