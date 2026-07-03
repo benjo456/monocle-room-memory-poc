@@ -20,6 +20,8 @@ You can set `OPENAI_API_KEY` in `.env`, or use the settings cog in the app to sa
 
 This repo includes a Codex skill template at `codex/skills/monocle` so Codex can answer `/monocle` questions from the local recorder.
 
+![Monocle Codex skill answering a room-memory question](docs/monocle-codex-skill.png)
+
 From this repository root, install or refresh the skill:
 
 ```bash
