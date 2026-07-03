@@ -2,6 +2,8 @@
 
 Hackathon POC for continuous webcam/microphone room memory. The app records short overlapping clips, extracts audio and visual summaries, and lets Codex query recent room context through the local Monocle bridge.
 
+![Monocle capture interface](docs/monocle-screenshot.png)
+
 ## Setup
 
 ```bash
